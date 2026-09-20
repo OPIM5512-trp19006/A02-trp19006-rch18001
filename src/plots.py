@@ -17,7 +17,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import r2_score
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # Define features (X) and target (y)
 X = df.drop('MedHouseVal', axis=1)
@@ -41,6 +41,7 @@ model = make_pipeline(
 		n_iter_no_change=10,
 		random_state=42,
 		max_iter=500,
+		learning_rate_init=0.001,
 	),
 )
 model.fit(X_train, y_train)
@@ -48,8 +49,46 @@ model.fit(X_train, y_train)
 y_train_pred = model.predict(X_train)
 y_pred = model.predict(X_test)
 mlp = model[-1]
-print(f"MLP test R^2: {r2_score(y_test, y_pred):.4f}")
-print(f"Training iterations: {mlp.n_iter_}")
+
+# Train a second model with a higher learning rate.
+tuned_model = make_pipeline(
+	StandardScaler(),
+	MLPRegressor(
+		hidden_layer_sizes=(100,),
+		early_stopping=True,
+		validation_fraction=0.1,
+		n_iter_no_change=10,
+		random_state=42,
+		max_iter=500,
+		learning_rate_init=0.01,
+	),
+)
+tuned_model.fit(X_train, y_train)
+y_train_tuned_pred = tuned_model.predict(X_train)
+y_tuned_pred = tuned_model.predict(X_test)
+tuned_mlp = tuned_model[-1]
+
+def print_metrics(name, actual_train, predicted_train, actual_test, predicted_test, iterations):
+	print(f"\n{name} (training iterations: {iterations})")
+	for split, actual, predicted in (
+		("Train", actual_train, predicted_train),
+		("Test", actual_test, predicted_test),
+	):
+		print(
+			f"{split}: R^2={r2_score(actual, predicted):.4f}, "
+			f"MAE={mean_absolute_error(actual, predicted):.4f}, "
+			f"RMSE={mean_squared_error(actual, predicted) ** 0.5:.4f}"
+		)
+
+print_metrics("Baseline model (learning rate 0.001)", y_train, y_train_pred, y_test, y_pred, mlp.n_iter_)
+print_metrics(
+	"Tuned model (learning rate 0.01)",
+	y_train,
+	y_train_tuned_pred,
+	y_test,
+	y_tuned_pred,
+	tuned_mlp.n_iter_,
+)
 
 # Plot actual versus predicted values for the training set.
 fig, ax = plt.subplots(figsize=(8, 6))
