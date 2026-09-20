@@ -68,4 +68,17 @@ os.makedirs(figs_dir, exist_ok=True)
 fig.savefig(os.path.join(figs_dir, "train_actual_vs_pred.png"), dpi=300)
 plt.close(fig)
 
+# Plot actual versus predicted values for the test set.
+fig, ax = plt.subplots(figsize=(8, 6))
+ax.scatter(y_test, y_pred, alpha=0.25, s=12)
+plot_min = min(y_test.min(), y_pred.min())
+plot_max = max(y_test.max(), y_pred.max())
+ax.plot([plot_min, plot_max], [plot_min, plot_max], color="black", linestyle="--")
+ax.set_xlabel("Actual MedHouseVal")
+ax.set_ylabel("Predicted MedHouseVal")
+ax.set_title("Test Set: Actual vs Predicted")
+ax.grid(alpha=0.2)
+fig.tight_layout()
+fig.savefig(os.path.join(figs_dir, "test_actual_vs_pred.png"), dpi=300)
+plt.close(fig)
 
