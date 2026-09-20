@@ -45,9 +45,27 @@ model = make_pipeline(
 )
 model.fit(X_train, y_train)
 
+y_train_pred = model.predict(X_train)
 y_pred = model.predict(X_test)
 mlp = model[-1]
 print(f"MLP test R^2: {r2_score(y_test, y_pred):.4f}")
 print(f"Training iterations: {mlp.n_iter_}")
+
+# Plot actual versus predicted values for the training set.
+fig, ax = plt.subplots(figsize=(8, 6))
+ax.scatter(y_train, y_train_pred, alpha=0.25, s=12)
+plot_min = min(y_train.min(), y_train_pred.min())
+plot_max = max(y_train.max(), y_train_pred.max())
+ax.plot([plot_min, plot_max], [plot_min, plot_max], color="black", linestyle="--")
+ax.set_xlabel("Actual MedHouseVal")
+ax.set_ylabel("Predicted MedHouseVal")
+ax.set_title("Training Set: Actual vs Predicted")
+ax.grid(alpha=0.2)
+fig.tight_layout()
+
+figs_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "figs")
+os.makedirs(figs_dir, exist_ok=True)
+fig.savefig(os.path.join(figs_dir, "train_actual_vs_pred.png"), dpi=300)
+plt.close(fig)
 
 
